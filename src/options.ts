@@ -22,6 +22,7 @@ export interface NexeOptions {
   targets: (string | NexeTarget)[]
   name: string
   remote: string
+  asset: string
   cwd: string
   fs: boolean | string[]
   flags: string[]
@@ -77,6 +78,7 @@ const alias = {
   i: 'input',
   o: 'output',
   v: 'version',
+  a: 'asset',
   t: 'target',
   b: 'build',
   n: 'name',
@@ -107,7 +109,7 @@ ${c.bold('nexe <entry-file> [options]')}
    ${c.underline.bold('Building from source:')}
 
   -b   --build                      -- build from source
-  -p   --python                     -- python2 (as python) executable path
+  -p   --python                     -- python3 (as python) executable path
   -f   --flag                       -- *v8 flags to include during compilation
   -c   --configure                  -- *arguments to the configure step
   -m   --make                       -- *arguments to the make/build step
@@ -137,7 +139,7 @@ function flatten(...args: any[]): string[] {
 }
 
 /**
- * Extract keys such as { "rc-CompanyName": "Node.js" } to
+ * Extract keys such  as { "rc-CompanyName": "Node.js" } to
  * { CompanyName: "Node.js" }
  * @param {*} match
  * @param {*} options
@@ -259,7 +261,9 @@ function normalizeOptions(input?: Partial<NexeOptions>): NexeOptions {
   options.downloadOptions.agent = process.env.HTTPS_PROXY
     ? caw(process.env.HTTPS_PROXY, { protocol: 'https' })
     : options.downloadOptions.agent || require('https').globalAgent
-  options.downloadOptions.rejectUnauthorized = process.env.HTTPS_PROXY ? false : true
+  options.downloadOptions.rejectUnauthorized = process.env.NODE_TLS_REJECT_UNAUTHORIZED
+    ? false
+    : true
 
   options.rc = options.rc || extractCliMap(/^rc-.*/, options)
   options.output =
@@ -293,7 +297,6 @@ function normalizeOptions(input?: Partial<NexeOptions>): NexeOptions {
   }
 
   Object.keys(alias)
-    .filter((k) => k !== 'rc')
     .forEach((x) => delete opts[x])
 
   return options

@@ -110,16 +110,8 @@ export class NexeCompiler {
     //SOMEDAY iterate over multiple targets with `--outDir`
     this.targets = options.targets as NexeTarget[]
     this.target = this.targets[0]
-    if (
-      !(
-        options.remote.startsWith('http://') ||
-        options.remote.startsWith('https://') ||
-        options.remote.startsWith('file://')
-      )
-    ) {
-      throw new NexeError(
-        `Invalid remote URI scheme (must be http, https, or file): ${options.remote}`
-      )
+    if (!/https?\:\/\//.test(options.remote)) {
+      throw new NexeError(`Invalid remote URI scheme (must be http or https): ${options.remote}`)
     }
     this.remoteAsset = options.remote + this.target.toString()
     this.src = join(this.options.temp, this.target.version)
@@ -198,6 +190,9 @@ export class NexeCompiler {
   }
 
   public getNodeExecutableLocation(target?: NexeTarget) {
+    if (this.options.asset) {
+      return resolve(this.options.cwd, this.options.asset)
+    }
     if (target) {
       return join(this.options.temp, target.toString())
     }
@@ -208,7 +203,7 @@ export class NexeCompiler {
     if (this.log.verbose) {
       this.compileStep!.pause()
     }
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       spawn(command, args, {
         cwd: this.src,
         env: this.env,
